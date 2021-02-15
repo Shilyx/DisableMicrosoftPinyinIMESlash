@@ -130,16 +130,18 @@ private:
         _In_ LPARAM lParam
     ) {
         if (nCode == HC_ACTION && lParam != 0) {
-            if (wParam == WM_KEYDOWN || wParam == WM_KEYUP) {
-                LPKBDLLHOOKSTRUCT lpKbs = (LPKBDLLHOOKSTRUCT)lParam;
+            if (GetKeyState(VK_SHIFT) >= 0) {
+                if (wParam == WM_KEYDOWN || wParam == WM_KEYUP) {
+                    LPKBDLLHOOKSTRUCT lpKbs = (LPKBDLLHOOKSTRUCT)lParam;
 
-                if (lpKbs->vkCode == VK_OEM_2) {
-                    if (wParam == WM_KEYDOWN) {
-                        keybd_event(VK_DIVIDE, 0, 0, lpKbs->dwExtraInfo);
-                    } else {
-                        keybd_event(VK_DIVIDE, 0, KEYEVENTF_KEYUP, lpKbs->dwExtraInfo);
+                    if (lpKbs->vkCode == VK_OEM_2) {
+                        if (wParam == WM_KEYDOWN) {
+                            keybd_event(VK_DIVIDE, 0, 0, lpKbs->dwExtraInfo);
+                        } else {
+                            keybd_event(VK_DIVIDE, 0, KEYEVENTF_KEYUP, lpKbs->dwExtraInfo);
+                        }
+                        return 1;
                     }
-                    return 1;
                 }
             }
         }
