@@ -129,19 +129,22 @@ private:
         _In_ WPARAM wParam,
         _In_ LPARAM lParam
     ) {
-        if (nCode == HC_ACTION && lParam != 0) {
-            if (GetKeyState(VK_SHIFT) >= 0) {
-                if (wParam == WM_KEYDOWN || wParam == WM_KEYUP) {
-                    LPKBDLLHOOKSTRUCT lpKbs = (LPKBDLLHOOKSTRUCT)lParam;
+        if (nCode == HC_ACTION &&
+            lParam != 0 &&
+            GetKeyState(VK_SHIFT) >= 0 &&
+            GetKeyState(VK_CONTROL) >= 0 &&
+            GetKeyState(VK_MENU) >= 0
+        ) {
+            if (wParam == WM_KEYDOWN || wParam == WM_KEYUP) {
+                LPKBDLLHOOKSTRUCT lpKbs = (LPKBDLLHOOKSTRUCT)lParam;
 
-                    if (lpKbs->vkCode == VK_OEM_2) {
-                        if (wParam == WM_KEYDOWN) {
-                            keybd_event(VK_DIVIDE, 0, 0, lpKbs->dwExtraInfo);
-                        } else {
-                            keybd_event(VK_DIVIDE, 0, KEYEVENTF_KEYUP, lpKbs->dwExtraInfo);
-                        }
-                        return 1;
+                if (lpKbs->vkCode == VK_OEM_2) {
+                    if (wParam == WM_KEYDOWN) {
+                        keybd_event(VK_DIVIDE, 0, 0, lpKbs->dwExtraInfo);
+                    } else {
+                        keybd_event(VK_DIVIDE, 0, KEYEVENTF_KEYUP, lpKbs->dwExtraInfo);
                     }
+                    return 1;
                 }
             }
         }
