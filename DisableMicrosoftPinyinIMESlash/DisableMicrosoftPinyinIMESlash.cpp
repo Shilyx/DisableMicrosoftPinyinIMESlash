@@ -124,6 +124,22 @@ private:
         }
     }
 
+    static void SendUnicodeChar(WCHAR chChar) {
+        INPUT inputs[2] = {0};
+
+        inputs[0].type = INPUT_KEYBOARD;
+        inputs[0].ki.wVk = 0;
+        inputs[0].ki.wScan = chChar;
+        inputs[0].ki.dwFlags = KEYEVENTF_UNICODE;
+
+        inputs[1].type = INPUT_KEYBOARD;
+        inputs[1].ki.wVk = 0;
+        inputs[1].ki.wScan = chChar;
+        inputs[1].ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
+
+        SendInput(2, inputs, sizeof(INPUT));
+    }
+
     static LRESULT CALLBACK LowLevelKeyboardProc(
         _In_ int    nCode,
         _In_ WPARAM wParam,
@@ -131,20 +147,30 @@ private:
     ) {
         if (nCode == HC_ACTION &&
             lParam != 0 &&
-            GetKeyState(VK_SHIFT) >= 0 &&
             GetKeyState(VK_CONTROL) >= 0 &&
             GetKeyState(VK_MENU) >= 0
         ) {
             if (wParam == WM_KEYDOWN || wParam == WM_KEYUP) {
                 LPKBDLLHOOKSTRUCT lpKbs = (LPKBDLLHOOKSTRUCT)lParam;
 
-                if (lpKbs->vkCode == VK_OEM_2) {
-                    if (wParam == WM_KEYDOWN) {
-                        keybd_event(VK_DIVIDE, 0, 0, lpKbs->dwExtraInfo);
-                    } else {
-                        keybd_event(VK_DIVIDE, 0, KEYEVENTF_KEYUP, lpKbs->dwExtraInfo);
+                if (GetKeyState(VK_SHIFT) >= 0) {
+                    // "/" without modifier: send numpad "/", which Microsoft Pinyin keeps as "/"
+                    if (lpKbs->vkCode == VK_OEM_2) {
+                        if (wParam == WM_KEYDOWN) {
+                            keybd_event(VK_DIVIDE, 0, 0, lpKbs->dwExtraInfo);
+                        } else {
+                            keybd_event(VK_DIVIDE, 0, KEYEVENTF_KEYUP, lpKbs->dwExtraInfo);
+                        }
+                        return 1;
                     }
-                    return 1;
+                } else {
+                    // Shift + "-" would turn into the Chinese dash pair in Microsoft Pinyin, force "_"
+                    if (lpKbs->vkCode == VK_OEM_MINUS) {
+                        if (wParam == WM_KEYDOWN) {
+                            SendUnicodeChar(L'_');
+                        }
+                        return 1;
+                    }
                 }
             }
         }
